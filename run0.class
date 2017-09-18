@@ -1,0 +1,84 @@
+! Aim: re-organise the CO datacube to be the same as the HCN/HCO+ data. 
+!      Shift the frequency to be observed frequency 
+!      shift the centre to to be the same as JCMT data 
+!      output a new file containing both JCMT data and 45m data. 
+!
+! CO data is from ! http://www.nro.nao.ac.jp/~nro45mrt/download/COatlas/data/n5236/N5236RD.FITS
+! note that the data is in J1950, and I convert it to J2000 with gildas, namely N5236RD_J2000.FITS
+! -- pmozhang@gmail.com 
+
+define double HCNft  HCOPft
+define double spec_number redshift restfreq 
+define double l b off_ra off_dec  
+define double veloreso 
+define double rms_theory rms_measured rms_allan  rms_ori rrms allan 
+define char   infile*128 outfile*128 reffile*128 
+define double N I0 V0 Dv N_out I0_out V0_out Dv_out
+define logical weak
+
+set var gauss read
+set weight eq
+
+let restfreq   &1
+let redshift   &2 ! redshift of M83 
+let infile     &3 
+let reffile    &4 
+let veloreso   &5     ! km/s
+let weak       &6  ! weak line or strong line?  
+
+
+file in 'infile'   ! read the jcmt file 
+
+! get the total scan number 
+find
+let spec_number found 
+
+! get position information from the first scan header
+get f 
+let l 'R%HEAD%POS%LAM*12./pi' 
+let b 'R%HEAD%POS%BET*180./pi'
+
+! -----------------------------------------------------------------------
+!  old help of modify position
+!  http://cds.u-strasbg.fr/vizier/doc/man/gildas/hlp/class-help-las.hlp
+!  If the coordinate system is EQuatorial:
+!         lambda = lambda_0 x 12 /pi
+!         beta   = beta_0   x 180/pi
+!   If the coordinate system is GALactic:
+!         lambda = lambda_0 x 180/pi
+!         beta   = beta_0   x 180/pi
+! -----------------------------------------------------------------------
+
+! -----------------------------------------------------------------------
+! ---------------------------   write HCN data  ------------------------- 
+!                       after correcting rest frequency 
+! -----------------------------------------------------------------------
+
+sic dele 'reffile'.45m_recenter.45m 
+file out 'reffile'.45m_recenter.45m s
+for i 1 to found
+    get idx%num[i] 
+    modify velo 0 
+    modify freq 'restfreq/(1+redshift)' ! for HCN
+    write i
+next 
+! -----------------------------------------------------------------------
+
+
+if weak.EQ.(.FALSE.) then
+        ! -----------------------------------------------------------------------
+        ! --------- re-position the reference position of the CO data 
+        !   write out to the same file:  reffile+'.45m_recenter.45m 
+        file in  'reffile'.45m
+        find 
+        
+        for i 1 to found
+            get idx%num[i] 
+            modify position l b                            !position 
+            modify freq '115271.2018/(1+redshift)'         !frequency 
+            write i+spec_number 
+        next 
+        !------------------------------------------------------------------
+else
+            set win 0 0
+                endif

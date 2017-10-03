@@ -2,7 +2,9 @@
 
 ## Part-1  convert JCMT file format to CLASS format 
 ###--------------------------
-### UPDATE 04 Jan. 2017: 
+### UPDATE 03 Oct. 2017: 
+###  revised the bug in velocity definition: 
+###  add velo or freq separation 
 ###--------------------------
 
 
